@@ -1,51 +1,60 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
+import api from "./services/Api";
+
+
+interface ToDos {
+  id: string,
+  todo: string
+}
+
 
 const App = () => {
-  const [tarefas, setTarefas] = useState([]);
-  const [postTarefa, setPostTarefa] = useState("");
+  const [postToDo, setPostToDo] = useState("");
+  const [todos, setTodos] = useState<ToDos[]>([]);
+
+  const getData  = async () => {
+    const response  = await api.get("/todos");
+    setTodos(response.data);
+  };
   useEffect(() => {
-    const getData = async () => {
-      const response = await axios.get("http://localhost:3000/todos");
-      setTarefas(response.data);
-    };
     getData();
   }, []);
 
- const handleSubmit = async (e) => {
+  const handlePost = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-     await axios.post("http://localhost:3000/todos", {
-      tarefa: postTarefa,
+    await api.post("/todos", {
+      todo: postToDo,
     });
-    const response = await axios.get("http://localhost:3000/todos");
-    setTarefas(response.data);
-    setPostTarefa("")
-   };
-   
-   const handleClick = async (id) => {
-      await axios.delete("http://localhost:3000/todos/" + id)
-      const response = await axios.get("http://localhost:3000/todos");
-      setTarefas(response.data);
-   }
+    setPostToDo("")
+    getData();
+  };
 
-
+  const handleDelete = async (id: string) =>{
+    await api.delete("/todos/" + id)
+    getData();
+  }
 
   return (
     <div className="w-35 bg-indigo-950 text-white rounded-2xl p-4">
       <h1 className="text-center">TODO</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handlePost}>
         <label>
           Insira a tarefa:
-          <input type="text" value={postTarefa} onChange={(e) => setPostTarefa(e.target.value)} />
+          <input
+            type="text"
+            value={postToDo}
+            onChange={(e) => setPostToDo(e.target.value)}
+          />
         </label>
         <button type="submit">Enviar</button>
       </form>
 
       <ul>
-        {tarefas && tarefas.map((tarefa) => (
-            <li key={tarefa.id}>
-              <span>{tarefa.tarefa}</span>
-              <button onClick={() => handleClick(tarefa.id)}>X</button>
+        {todos &&
+          todos.map((todo) => (
+            <li key={todo.id}>
+              <span>{todo.todo}</span>
+              <button onClick={() => handleDelete(todo.id)}>X</button>
             </li>
           ))}
       </ul>
